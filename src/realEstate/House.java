@@ -20,6 +20,7 @@ public class House {
     private int numCarspace;
     private double sizeHouse;
     private String descriptionHouse;
+    //Delimiter used to separate data when stored in the txt file
     String delimeter = "~";
 
     public House (String id, String address, String type, double price, int bedrooms, int bathrooms, int carspace, double size, String description){
@@ -59,13 +60,13 @@ public class House {
     		return false;
     	}
     
-    	//Condition-1: check words of description
+    	//Condition-1: check the number of words in description
     	int wordsDescription = countWords(this.descriptionHouse);
-    	if(wordsDescription < 5 || wordsDescription > 10) {
+    	if(wordsDescription <= 5 || wordsDescription >= 10) {
     		return false;
     	}
     	
-    	//Condition-2: number of bedrooms and bathrooms for each house
+    	//Condition-2: number of bathrooms for a house with more than 4 bedrooms
     	if(this.numBedrooms > 4 && this.numBathrooms <= 2) {
     		return false;
     	}
@@ -79,21 +80,24 @@ public class House {
     	if(this.houseType == "Apartment" && this.numCarspace < 1) {
     		return false;
     	}
-    	
-    	//Condition-4: check for negative integers and float values
+
+    	//Condition: check for negative integers and float values
     	if(this.numCarspace < 0 || this.numBedrooms < 0 || this.numBathrooms < 0 || this.housePrice < 0 || this.sizeHouse < 0) {
     		return false;
     	}
     	
     	//Condition-5
-    	if(this.housePrice < 100000 || this.housePrice > 1500000) {
+    	if(this.housePrice <= 100000 || this.housePrice >= 1500000) {
     		return false;
+    	}
+    	    	
+    	//Condition-6
+    	if(this.numBedrooms < 3 && this.numBathrooms < 2) {
+    		if(this.housePrice > 750000) {
+    			return false;
+    		}
     	}
     	
-    	//Condition-6
-    	if(this.numBedrooms < 3 && this.numBathrooms == 2 && this.housePrice > 750000) {
-    		return false;
-    	}
     	
     	String houseString = houseId + delimeter + this.houseAddress + delimeter + this.houseType + delimeter + this.housePrice + delimeter + this.numBedrooms + delimeter + this.numBathrooms + delimeter + this.numCarspace + delimeter+ this.sizeHouse + delimeter + this.descriptionHouse;
     	//write to the text file to add this house
@@ -110,58 +114,80 @@ public class House {
     public boolean updateHouse(String newAddress, String newType, double newPrice, int newBedrooms, int newBathrooms, int newCarspace, double newSize, String newDescription){
     	String houseId = this.houseID;
 
-    	//Condition-1: check words of description
+    	//Condition: check words of description
     	int wordsDescription = countWords(newDescription);
-    	if(wordsDescription < 5 || wordsDescription > 10) {
+    	if(wordsDescription <= 5 || wordsDescription >= 10) {
     		return false;
     	}
 
-    	//Condition-2: number of bedrooms and bathrooms for each house
-    	if(newBedrooms > 4 && newBathrooms <= 2) {
+    	//Condition: number of bedrooms and bathrooms for each house
+    	//Check if the current number of bedrooms are greater than 4
+    	//Also check if the new number of bedrooms are greater than 4
+    	if(this.numBedrooms > 4 || newBedrooms > 4) {
+    		if(newBathrooms <= 2) {
+    			return false;
+    		}
+    	}
+    	
+    	//Condition: house size and house price
+    	//Check current as well as the  new size for this condition
+    	if(this.sizeHouse < 50 || newSize < 50) {
+    		if(newPrice > 350000) {
+    			return false;	
+    		}
+    	}
+    	
+    	//Condition: apartment should have atleast one car space
+    	if(this.houseType == "Apartment" || newType == "Apartment") {
+    		if(newCarspace < 1) {
+    			return false;
+    		}
+    	}
+    	
+    	//Condition: check for negative numbers
+    	if(newCarspace < 0 || newBedrooms < 0 || newBathrooms < 0 || newPrice < 0 || newSize < 0) {
     		return false;
     	}
     	
-    	//Condition-3: house size and house price
-    	if(newSize < 50 && newPrice > 350000) {
+    	//Condition: change in price
+    	if(newPrice <= 100000 || newPrice >= 1500000) {
     		return false;
     	}
     	
-    	//Condition-4
-    	if(newType == "Apartment" && newCarspace < 1) {
-    		return false;
+    	//Condition: change in price for a house with less than 3 bedrooms and 2 bathrooms
+    	if((this.numBedrooms < 3 || newBedrooms < 3) && (this.numBathrooms < 2 || newBathrooms < 2)) {
+    		if(newPrice > 750000) {
+    			return false;
+    		}
     	}
     	
-    	//Condition-4: added my own
-    	if(newCarspace < 0) {
-    		return false;
-    	}
-    	
-    	//Condition-5
-    	if(newPrice < 100000 || newPrice > 1500000) {
-    		return false;
-    	}
-    	
-    	//Condition-6
-    	if(newBedrooms < 3 && newBathrooms == 2 && newPrice > 750000) {
-    		return false;
-    	}
-    	
-    	//Condition-2
+    	//Condition-2: incorrect increase in price based on number of bedrooms
+    	//check only when there is an increase in size
+    	//calculates increase percentage and check if the increase is within the constraints
     	double currentPrice = this.housePrice;
-		double increasePercentage = (currentPrice/newPrice)/100;
-    	if(newBedrooms < 3 && increasePercentage > 10) {
-    		return false;
-    	} else if(increasePercentage > 20) {
-    		return false;
+    	if(newPrice > currentPrice) {
+    		double increasePercentage = ((newPrice - currentPrice)/currentPrice)*100;
+        	if(this.getNumBedrooms() < 3 && increasePercentage > 10) {
+        		return false;
+        	} else if(increasePercentage > 20) {
+        		return false;
+        	}
     	}
-    	
-    	//Condition-4:
-    	double currentSize = this.sizeHouse;
-		double increasePercentageSize = (currentSize/newSize)/100;
-		if(increasePercentageSize < 5 && increasePercentageSize > 10) {
-			return false;
-		}
 		
+    	
+    	//Condition-4: checks correct change in size
+    	//check only when there is an increase in size
+    	//calculates increase percentage and check if the increase is within the constraints
+    	double currentSize = this.sizeHouse;
+    	if(newSize > currentSize) {
+    		double increasePercentageSize = ((newSize - currentSize)/currentSize)*100;
+    		if(increasePercentageSize <= 5 || increasePercentageSize >= 10) {
+    			return false;
+    		}
+    	}
+		
+    	
+    	// array list to store each line(each house) from the txt file as an object to perform the updates
 		ArrayList<House> houseObjects = new ArrayList();
 		//read the txt file and create an object for each line and store all those objects
 		// then write each of those objects to the same txt file, overwriting the old data
@@ -170,6 +196,7 @@ public class House {
 
 		    while (line != null) {
 		        String[] house = line.split(delimeter);
+		        //create an object of class "House" for each line
 				House houseObject = new House(house[0], house[1], house[2], Double.parseDouble(house[3]), Integer.parseInt(house[4]), Integer.parseInt(house[5]), Integer.parseInt(house[6]), Double.parseDouble(house[7]), house[8]);
 				houseObjects.add(houseObject);
 		        line = br.readLine();
@@ -182,20 +209,21 @@ public class House {
 			e.printStackTrace();
 		}
 		
-		//update comes here
 		//converts the array list items to their corresponding objects of class "House"
-    	//write to the text file
+    	//each object is written to the text file as a new line
+		// Entire text file is re-written
     	try (PrintWriter output = new PrintWriter(new FileWriter("houses.txt", false));) {
     		output.flush();
+    		// iterate through the list of houses to find the house which is to be updated
     		for(int i = 0; i < houseObjects.size(); i++) {
     			String currentHouseId = houseObjects.get(i).getHouseID();
     			if(currentHouseId.equals(houseId)) {
     				House houseReference = houseObjects.get(i);
-    				//changes come here:
+    				// all the updates performed here
+    				houseReference.setHouseType(newType);
     				if(houseReference.getHouseType() == "Townhouse") {
     					houseReference.setHouseAddress(newAddress);
     				}
-    				houseReference.setHouseType(newType);
     				houseReference.setHousePrice(newPrice);
     				houseReference.setNumBedrooms(newBedrooms);
     				houseReference.setNumBathrooms(newBathrooms);
@@ -204,10 +232,12 @@ public class House {
     				houseReference.setDescriptionHouse(newDescription);
     			}
 
+    			// as each house is iterated, it is written to the text file
     			String houseInfo = houseObjects.get(i).getHouseID() + delimeter + houseObjects.get(i).getHouseAddress() + delimeter + houseObjects.get(i).getHouseType() + delimeter + houseObjects.get(i).getHousePrice() + delimeter + houseObjects.get(i).getNumBedrooms() + delimeter + houseObjects.get(i).getNumBathrooms() + delimeter + houseObjects.get(i).getNumCarspace() + delimeter+houseObjects.get(i).getSizeHouse() + delimeter + houseObjects.get(i).getDescriptionHouse();
     			output.print(houseInfo + "\n");
     		}
     		output.close();
+    		
     		} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -215,6 +245,7 @@ public class House {
         return true;
     }
     
+    // to create the text file for test cases
     public static void createTextFile() {
     	try {
     	      File myObj = new File("./houses.txt");
@@ -231,6 +262,7 @@ public class House {
     	    }
     }
     
+    // function to count words in a string
     public static int countWords(String str) {
     	String trim = str.trim();
     	if (trim.isEmpty())
@@ -238,6 +270,7 @@ public class House {
     	return trim.split("\\s+").length;
     }
 
+    // getter and setter methods
 	private String getHouseID() {
 		return houseID;
 	}
